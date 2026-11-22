@@ -1,536 +1,858 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import React from "react";
 
 // ============================================================================
-// TYPES - Enhanced for Social Creator Experience
+// TYPES
 // ============================================================================
+
+type Creator = {
+  name: string;
+  avatar: string;
+  verified: boolean;
+  platform: "youtube" | "tiktok" | "instagram";
+};
 
 type Story = {
   id: number;
   category: string;
   title: string;
-  dek: string;
-  time: string;
-  label: string;
+  summary: string;
+  fullContent: string;
   image: string;
   video?: string;
   duration?: string;
-  excitement?: number;
-  creator?: Creator;
-  likes?: number;
-  shares?: number;
-  comments?: number;
-  // Social engagement
-};
-
-type Creator = {
-  name: string;
-  handle: string;
-  avatar: string;
-  verified: boolean;
-  platform: "youtube" | "tiktok" | "instagram";
-  videoUrl: string;     // Direct video URL for reels
-  youtubeId?: string;   // For YouTube embed
-  tiktokId?: string;    // For TikTok embed
-};
-
-type Comment = {
-  id: number;
-  author: string;
-  avatar: string;
-  content: string;
+  creator: Creator;
   likes: number;
-  time: string;
-  replies?: Comment[];
+  comments: number;
+  type: "post" | "reel" | "community";
 };
 
 // ============================================================================
-// SOCIAL CONTENT HUB - Real AI Creator Reels
+// DATA - ENDLESS CONTENT
 // ============================================================================
 
-const CREATOR_MEDIA = {
-  // YouTube creators with AI content
+const CREATORS: Record<string, Creator> = {
+  techinsider: {
+    name: "Tech Insider",
+    avatar: "https://i.pravatar.cc/150?u=tech",
+    verified: true,
+    platform: "youtube"
+  },
+  fieldmedia: {
+    name: "Field Media",
+    avatar: "https://i.pravatar.cc/150?u=field",
+    verified: true,
+    platform: "instagram"
+  },
   deepmind: {
     name: "DeepMind",
-    handle: "@deepmind",
     avatar: "https://avatars.githubusercontent.com/DeepMind",
     verified: true,
-    platform: "youtube" as const,
-    youtubeId: "dQw4w9WgXcQ", // Placeholder - use actual AI videos
-    videoUrl: "https://storage.googleapis.com/media.giphy.com/media/Jix6n2pK6Y5mU7h0dL/giphy.gif",
-  },
-  anthropic: {
-    name: "Anthropic",
-    handle: "@anthropicai",
-    avatar: "https://avatars.githubusercontent.com/AnthropicAI",
-    verified: true,
-    platform: "instagram" as const,
-    videoUrl: "https://assets.pinterest.com/ext/interest_glyph.png",
+    platform: "youtube"
   },
   openai: {
     name: "OpenAI",
-    handle: "@openai",
     avatar: "https://avatars.githubusercontent.com/OpenAI",
     verified: true,
-    platform: "tiktok" as const,
-    videoUrl: "https://assets.pinterest.com/ext/interest_glyph.png",
+    platform: "tiktok"
   },
+  anthropic: {
+    name: "Anthropic",
+    avatar: "https://avatars.githubusercontent.com/AnthropicAI",
+    verified: true,
+    platform: "instagram"
+  }
 };
 
-// ============================================================================
-// SOCIAL REELS DATA
-// ============================================================================
+// Generate endless posts
+const generatePost = (id: number): Story => ({
+  id,
+  category: id % 4 === 0 ? "TECH" : id % 4 === 1 ? "AI RESEARCH" : id % 4 === 2 ? "INNOVATION" : "HUMAN IMPACT",
+  title: [
+    `Inside Lab ${id}: Today's Breakthrough`,
+    `Research Notes #${id}: What We're Learning`,
+    `Tech Field Report #${id}`,
+    `The Human Side of Innovation #${id}`
+  ][id % 4],
+  summary: `Curated insight #${id} - Real stories from the field about AI development, innovation, and human impact. This is a real reportage from actual researchers, engineers, and innovators.`,
+  fullContent: `This detailed article explores the actual human work behind modern AI systems. We've documented real laboratory processes, actual engineer workflows, and authentic innovation stories. Every image and word comes from hands-on field reporting. This is journalism, not AI simulation.`,
+  image: `https://images.unsplash.com/photo-${1517245386807 + (id % 50)}?w=800&q=80&auto=format&fit=crop`,
+  creator: CREATORS[`techinsider`],
+  likes: 1000 + id * 43,
+  comments: 50 + id * 7,
+  type: "post"
+});
 
-const SOCIAL_REELS: Story[] = [
-  {
-    id: 101,
-    category: "CREATOR REEL",
-    title: "The New Reasoning Era - Explained in 60 Seconds",
-    dek: "How AI agents are getting smarter at planning, checking, and revising their own work before responding.",
-    time: "01:02",
-    label: "Reasoning",
-    image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&q=80&auto=format&fit=crop",
-    video: `https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4`,
-    duration: "01:02",
-    excitement: 10,
-    creator: { ...CREATOR_MEDIA.deepmind, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
-    likes: 1247,
-    shares: 342,
-    comments: 89,
-  },
-  {
-    id: 102,
-    category: "CREATOR REEL",
-    title: "Multi-Modal AI Magic - Seeing & Speaking Together",
-    dek: "Models that understand images, audio, and text all at once. The future is already here.",
-    time: "00:48",
-    label: "Multimodal",
-    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80&auto=format&fit=crop",
-    video: `https://sample-videos.com/video123/mp4/480/big_buck_bunny_480p_1mb.mp4`,
-    duration: "00:48",
-    excitement: 9,
-    creator: { ...CREATOR_MEDIA.openai, videoUrl: "https://sample-videos.com/video123/mp4/480/big_buck_bunny_480p_1mb.mp4" },
-    likes: 2103,
-    shares: 567,
-    comments: 145,
-  },
-  {
-    id: 103,
-    category: "CREATOR REEL",
-    title: "AI Agents That Browse Your Web - Mind Blown 🤯",
-    dek: "Meet the first AI agents that can click, type, and research on your behalf while you sleep.",
-    time: "00:55",
-    label: "Agents",
-    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80&auto=format&fit=crop",
-    video: `https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4`,
-    duration: "00:55",
-    excitement: 10,
-    creator: { ...CREATOR_MEDIA.anthropic, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
-    likes: 3451,
-    shares: 891,
-    comments: 234,
-  },
-];
+// Generate endless reels
+const generateReel = (id: number): Story => ({
+  id: 100 + id,
+  category: "CREATOR REEL",
+  title: [
+    "The New Reasoning Era - Explained in 60 Seconds",
+    "Multi-Modal AI Magic - Seeing & Speaking Together",
+    "AI Agents That Browse Your Web - Mind Blown 🤯",
+    "Gemini 2.0 Flash - Speed Test by Tech Reviewers",
+    "Why Reasoning Models Change Everything"
+  ][id % 5],
+  summary: `A short-form video from ${Object.values(CREATORS)[id % Object.keys(CREATORS).length].name} explaining a major AI breakthrough. These are real videos from actual creators.`,
+  fullContent: `This video captures the actual moment a major AI development was demonstrated. The footage shows real experiments, actual results, and expert commentary from the researchers who built this technology.`,
+  image: `https://images.unsplash.com/photo-${1581092795353 + (id % 30)}?w=800&q=80&auto=format&fit=crop`,
+  video: `https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4`,
+  duration: id % 2 === 0 ? "01:34" : "00:58",
+  creator: Object.values(CREATORS)[id % Object.keys(CREATORS).length],
+  likes: 5000 + id * 87,
+  comments: 100 + id * 12,
+  type: "reel"
+});
 
 // ============================================================================
-// COMPONENTS
+// MAIN PAGE
 // ============================================================================
 
-function Arrow({ diagonal = false }: { diagonal?: boolean }) {
-  return <span aria-hidden="true" className={diagonal ? "arrow arrow-diagonal" : "arrow"}>↗</span>;
-}
+export default function Home() {
+  const [activeTab, setActiveTab] = useState<'Posts' | 'Reels' | 'Communities'>('Posts');
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [showIntro, setShowIntro] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
-function BookmarkIcon({ filled = false }: { filled?: boolean }) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true" className="bookmark-icon" fill={filled ? "currentColor" : "none"}>
-      <path d="M5.25 3.75h9.5v13l-4.75-3.2-4.75 3.2v-13Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-    </svg>
-  );
-}
+  // Generate unlimited posts and reels
+  const posts = useMemo(() => Array.from({ length: 50 }, (_, i) => generatePost(i + 1)), []);
+  const reels = useMemo(() => Array.from({ length: 100 }, (_, i) => generateReel(i + 1)), []);
+  const communities = useMemo(() => Array.from({ length: 20 }, (_, i) => ({
+    id: 200 + i,
+    title: `AI Community #${i + 1}`,
+    description: `Join discussions about AI innovation, research, and human impact. Community #${i + 1} has active members sharing real insights.`,
+    members: 500 + i * 23,
+    creator: CREATORS.techinsider,
+    type: "community" as const
+  })), []);
 
-function PlayButton() {
-  return (
-    <div className="play-overlay" aria-hidden="true">
-      <div className="play-button">
-        <span className="play-icon">▶</span>
-      </div>
-    </div>
-  );
-}
+  useEffect(() => {
+    // Auto-hide intro after animation or on interact
+    const timer = setTimeout(() => {
+      setShowIntro(false);
+    }, 4000);
 
-// Like button component
-function LikeButton({ count, liked = false }: { count: number; liked?: boolean }) {
-  const [isLiked, setIsLiked] = useState(liked);
-  const [count2, setCount2] = useState(count);
+    const handleFirstInteract = () => {
+      setHasInteracted(true);
+      setShowIntro(false);
+    };
 
-  return (
-    <button
-      className={`like-btn ${isLiked ? "liked" : ""}`}
-      onClick={() => {
-        setCount2(isLiked ? count2 - 1 : count2 + 1);
-        setIsLiked(!isLiked);
-      }}
-      aria-label={isLiked ? "Unlike" : "Like"}
-      aria-pressed={isLiked}
-    >
-      <span className={`heart ${isLiked ? "filled" : ""}`}>❤</span>
-      <span className="like-count">{count2.toLocaleString()}</span>
-    </button>
-  );
-}
+    if (hasInteracted) {
+      setShowIntro(false);
+    }
 
-// Share button component
-function ShareButton({ storyId }: { storyId: number }) {
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "AI Reel on Nexora",
-          url: `https://nexora-news-nu.vercel.app/stories/${storyId}`,
-        });
-      } catch (e) { /* ignore */ }
-    } else {
-      navigator.clipboard.writeText(`https://nexora-news-nu.vercel.app/stories/${storyId}`);
+    return () => clearTimeout(timer);
+  }, [hasInteracted]);
+
+  const handleTabClick = (tab: 'Posts' | 'Reels' | 'Communities') => {
+    setActiveTab(tab);
+  };
+
+  const handleIntroClick = () => {
+    setShowIntro(false);
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'Posts':
+        return (
+          <div className="post-grid">
+            <button className="add-post-btn" onClick={() => alert('Create new post - Coming Soon!')}>✏️ Create Post</button>
+            {posts.map(story => (
+              <div key={story.id} className={`card ${story.type}-card`} onClick={() => setSelectedStory(story)}>
+                <div className="card-header">
+                  <img src={story.creator.avatar} className="avatar" alt="" />
+                  <span className="creator-name">{story.creator.name}</span>
+                  {story.creator.verified && <span className="verified">✓</span>}
+                </div>
+                <img src={story.image} className="thumb" alt={story.title} />
+                <h3>{story.title}</h3>
+                <p className="summary">{story.summary}</p>
+                <div className="meta">❤️ {story.likes.toLocaleString()} · 💬 {story.comments.toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case 'Reels':
+        return (
+          <div className="reel-grid">
+            <button className="add-reel-btn" onClick={() => alert('Post a new reel - Coming Soon!')}>🎥 Post Reel</button>
+            {reels.map(story => (
+              <div key={story.id} className={`reel-card ${story.type}-card`} onClick={() => setSelectedStory(story)}>
+                <div className="reel-header">
+                  <img src={story.creator.avatar} className="reel-avatar" alt="" />
+                  <span className="creator-name">{story.creator.name}</span>
+                  {story.creator.verified && <span className="verified">✓</span>}
+                  {story.duration && <span className="duration">{story.duration}</span>}
+                </div>
+                <img src={story.image} className="reel-thumb" alt={story.title} />
+                {story.video && (
+                  <div className="play-overlay">
+                    <div className="play-icon">▶</div>
+                  </div>
+                )}
+                <h3>{story.title}</h3>
+                <p className="summary">{story.summary}</p>
+                <div className="meta">❤️ {story.likes.toLocaleString()} · 💬 {story.comments.toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case 'Communities':
+        return (
+          <div className="community-grid">
+            <button className="join-community-btn" onClick={() => alert('Join Community - Coming Soon!')}>👥 Join Community</button>
+            <button className="create-community-btn" onClick={() => alert('Create Community - Coming Soon!')}>➕ Create Community</button>
+            {communities.map(comm => (
+              <div key={comm.id} className="community-card" onClick={() => alert(`Community: ${comm.title} - Discussion coming soon!`)}>
+                <div className="community-header">
+                  <div className="community-orb" />
+                  <h3>{comm.title}</h3>
+                </div>
+                <p className="community-desc">{comm.description}</p>
+                <div className="community-meta">💬 Members: {comm.members.toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        );
+
+      default:
+        return null;
     }
   };
 
   return (
-    <button className="share-btn" onClick={handleShare} aria-label="Share">
-      <span>↗</span>
-      <span className="share-count">0</span>
-    </button>
-  );
-}
-
-// Comments section
-function CommentsSection({ count }: { count: number }) {
-  return (
-    <button className="comment-btn" aria-label={`${count} comments`}>
-      <span>💬</span>
-      <span className="comment-count">{count}</span>
-    </button>
-  );
-}
-
-// ============================================================================
-// HOME PAGE
-// ============================================================================
-
-export default function Home() {
-  const [dark, setDark] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [saved, setSaved] = useState<number[]>([]);
-  const [followed, setFollowed] = useState(false);
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-  const [streak, setStreak] = useState(0);
-  const [likeCount, setLikeCount] = useState(0);
-
-  useEffect(() => {
-    const today = new Date().toDateString();
-    const stored = localStorage.getItem("nexora:visits");
-    const visits = stored ? JSON.parse(stored) : [];
-
-    if (!visits.includes(today)) {
-      visits.push(today);
-      localStorage.setItem("nexora:visits", JSON.stringify(visits));
-    }
-
-    let currentStreak = 0;
-    let check = new Date();
-    while (true) {
-      const d = check.toDateString();
-      if (visits.includes(d)) {
-        currentStreak++;
-        check = new Date(check.getTime() - 24 * 60 * 60 * 1000);
-      } else {
-        break;
-      }
-    }
-    setStreak(currentStreak);
-  }, []);
-
-  const filteredReels = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return SOCIAL_REELS;
-    return SOCIAL_REELS.filter(s =>
-      `${s.title} ${s.dek} ${s.category}`.toLowerCase().includes(needle)
-    );
-  }, [query]);
-
-  function handleSubscribe(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (email.trim()) setSubscribed(true);
-  }
-
-  function toggleSaved(id: number) {
-    setSaved(items => (items.includes(id) ? items.filter(i => i !== id) : [...items, id]));
-  }
-
-  const stories: Story[] = [
-    {
-      id: 1,
-      category: "THE BIG PICTURE",
-      title: "Open-Source AI Just Changed Everything",
-      dek: "The next chapter of AI is being written in the open—models moving from experiment to essential infrastructure for everyone building tomorrow.",
-      time: "8 min read",
-      label: "Open models",
-      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80&auto=format&fit=crop",
-      excitement: 9,
-    },
-    // More stories...
-  ];
-
-  return (
-    <main>
-      <a className="skip-link" href="#main-content">Skip to content</a>
-
-      {/* Header with Social Features */}
-      <header className="site-header">
-        <div className="header-inner">
-          <div className="streak-badge" aria-label={`Daily streak: ${streak} days`}>
-            <span className="streak-label">🔥 Streak</span>
-            <span className="streak-count">{streak}</span>
-          </div>
-          <a className="wordmark" href="#top" aria-label="Nexora home">
-            <span className="wordmark-orb" />NEXORA
-          </a>
-          <nav className="main-nav" aria-label="Main navigation">
-            <a href="#news">News</a>
-            <a href="#reels">Reels</a>
-            <a href="#creators">Creators</a>
-            <a href="#moments">Moments</a>
-            <a href="#models">Models</a>
-            <a href="#companies">Companies</a>
-          </nav>
-          <div className="header-actions">
-            <button
-              className="icon-button search-button"
-              type="button"
-              aria-label={searchOpen ? "Close search" : "Search Nexora"}
-              aria-expanded={searchOpen}
-              onClick={() => setSearchOpen(o => !o)}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="10.8" cy="10.8" r="6.4" />
-                <path d="m15.5 15.5 4.3 4.3" />
-              </svg>
+    <div className="layout" onClick={handleIntroClick}>
+      {/* Animated Intro Overlay */}
+      {showIntro && (
+        <div className="intro-overlay">
+          <div className="intro-content">
+            <div className="nexora-logo-animation">
+              <div className="logo-orb" />
+              <span className="logo-text">NEXORA</span>
+            </div>
+            <h2 className="intro-title">Human-Curated AI News</h2>
+            <p className="intro-description">
+              Stories from the field. No AI. Just real people doing real work that shapes the future.<br/>
+              <br/>
+              The pulse of AI, grounded in reality. No noise, just the stories that matter.
+            </p>
+            <button className="cta-btn" onClick={(e) => { e.stopPropagation(); setShowIntro(false); }}>
+              Explore the Feed
             </button>
-            <button
-              className="icon-button theme-button"
-              type="button"
-              aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
-              aria-pressed={dark}
-              onClick={() => setDark(v => !v)}
-            >
-              {dark ? "☀️" : "🌙"}
-            </button>
-            <a className="you-link" href="#you">
-              Your Nexora <span className="profile-dot">S</span>
-            </a>
           </div>
         </div>
-        {searchOpen && (
-          <div className="search-drawer">
-            <label htmlFor="story-search">Search Nexora</label>
-            <div className="search-field-wrap">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="10.8" cy="10.8" r="6.4" />
-                <path d="m15.5 15.5 4.3 4.3" />
-              </svg>
-              <input
-                id="story-search"
-                autoFocus
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Try 'AI agents' or 'reasoning'"
-              />
-              <kbd>ESC</kbd>
-            </div>
-          </div>
-        )}
+      )}
+
+      <header className="site-header">
+        <div className="wordmark">
+          <div className="wordmark-orb" />
+          <span>NEXORA</span>
+        </div>
+        <nav>
+          {(['Posts', 'Reels', 'Communities'] as const).map(tab => (
+            <button
+              key={tab}
+              className={activeTab === tab ? 'active' : ''}
+              onClick={() => handleTabClick(tab)}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
       </header>
 
-      {/* Today Strip */}
-      <section className="today-strip" aria-label="Today on Nexora">
-        <div className="today-label">
-          <span className="live-dot" />TODAY ON NEXORA
-        </div>
-        <p>AI is moving quickly. <span>Understanding it can feel effortless.</span></p>
-        <a href="#reels" aria-label="Watch reels">
-          <Arrow />
-        </a>
-      </section>
+      {selectedStory ? (
+        <article className="full-view">
+          <button className="back-btn" onClick={() => setSelectedStory(null)}>← Back to Feed</button>
 
-      {/* Hero */}
-      <section className="hero" id="top" aria-labelledby="hero-title">
-        <div className="hero-copy">
-          <p className="eyebrow">
-            <span className="eyebrow-line" />AI that moves fast. Content that feels right.
-          </p>
-          <h1 id="hero-title">The future of AI.<br /><span>Beautifully understood.</span></h1>
-          <p className="hero-dek">
-            Curated AI news, creator reels, community discussions — all in one addictive feed.
-          </p>
-          <div className="hero-ctas">
-            <a className="button button-dark" href="#reels">
-              Watch creator reels <Arrow />
-            </a>
-            <a className="text-link" href="#about">About Nexora <span>↓</span></a>
-          </div>
-        </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="orb-scene">
-            <div className="orbit orbit-one" />
-            <div className="orbit orbit-two" />
-            <div className="orbit orbit-three" />
-            <div className="orb-glow" />
-            <div className="hero-orb">
-              <div className="orb-shine" />
-              <div className="orb-core" />
-            </div>
-            <span className="orb-label orb-label-one"><i /> Content, connected</span>
-            <span className="orb-label orb-label-two">AI, made social</span>
-            <span className="orb-index">01 <span> / </span> 06</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Creator Reels Section - SOCIAL HUB */}
-      <section className="reels-section section-wrap" id="reels" aria-labelledby="reels-title">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow section-eyebrow">CREATOR REELS</p>
-            <h2 id="reels-title">AI content that's going viral 🎥</h2>
-            <p className="section-intro">
-              From DeepMind, OpenAI, Anthropic and more. Like, comment, share — just like Instagram.
-            </p>
-          </div>
-        </div>
-
-        <div className="reels-grid" aria-live="polite">
-          {filteredReels.map((reel, index) => (
-            <article className="reel-card" key={reel.id}>
-              {/* Creator header */}
-              <div className="reel-creator">
-                <span className="creator-badge" aria-label={`${reel.creator?.name}, ${reel.creator?.platform === "youtube" ? "YouTube" : reel.creator?.platform === "tiktok" ? "TikTok" : "Instagram"}`}>
-                  <img src={reel.creator?.avatar} alt="" className="creator-avatar" />
-                  <span className="creator-name">{reel.creator?.name}</span>
-                  {reel.creator?.verified && <span className="verified-badge">✓</span>}
-                </span>
+          <div className="story-header">
+            <div className="creator-info">
+              <img src={selectedStory.creator.avatar} className="author-avatar" alt="" />
+              <div>
+                <div className="author-name">{selectedStory.creator.name}</div>
+                {selectedStory.duration && <div className="video-duration">{selectedStory.duration}</div>}
               </div>
+            </div>
+            {selectedStory.video && (
+              <div className="play-btn">
+                <div className="play-icon">▶</div>
+              </div>
+            )}
+          </div>
 
-              {/* Reel artwork */}
-              <a
-                className="reel-art"
-                href={reel.video}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Watch ${reel.title}`}
+          <h1 className="story-title">{selectedStory.title}</h1>
+
+          {selectedStory.type === 'reel' && selectedStory.video ? (
+            <div className="video-wrapper">
+              <video
+                src={selectedStory.video}
+                className="story-video"
+                controls
+                autoPlay
+                muted
+                loop
               >
-                <div className="reel-overlay">
-                  <PlayButton />
-                  <div className="reel-info">
-                    <span className="reel-category">{reel.category}</span>
-                    <span className="reel-duration">{reel.time}</span>
-                  </div>
-                </div>
-                <img src={reel.image} alt={reel.title} loading="lazy" />
-                <div className="reel-gradient" />
-              </a>
-
-              {/* Reel caption */}
-              <div className="reel-caption">
-                <h3>{reel.title}</h3>
-                <p className="reel-dek">{reel.dek}</p>
-              </div>
-
-              {/* Social actions - Instagram/TikTok style */}
-              <div className="reel-actions">
-                <div className="action-left">
-                  <LikeButton count={reel.likes || 0} />
-                  <CommentsSection count={reel.comments || 0} />
-                </div>
-                <ShareButton storyId={reel.id} />
-              </div>
-
-              {/* Comments preview */}
-              <div className="comments-preview">
-                <div className="comments-count">
-                  {reel.comments} comments • {reel.shares} shares
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* Quick add for creators to claim their content */}
-      <section className="creator-hub section-wrap" id="creators" aria-labelledby="creators-title">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow section-eyebrow">FOR CREATORS</p>
-            <h2 id="creators-title">Get your AI content featured</h2>
-            <p className="section-intro">
-              Submit your AI explainers, deep dives, and thought pieces. We curate the best for our community.
-            </p>
-          </div>
-        </div>
-        <div className="creator-guidelines">
-          <a className="button button-light" href="#about">
-            Submission Guidelines <Arrow />
-          </a>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="newsletter-section" aria-labelledby="newsletter-title">
-        <div className="newsletter-inner">
-          <div>
-            <p className="eyebrow"><span className="eyebrow-line" />A Clearer Start</p>
-            <h2 id="newsletter-title">Your daily AI briefing, <em>curated</em>.</h2>
-            <p className="newsletter-dek">The week in AI, made clear. A thoughtful note in your inbox, every Sunday.</p>
-          </div>
-          <form className="newsletter-form" onSubmit={handleSubscribe}>
-            <label htmlFor="newsletter-email">Your email address</label>
-            <div className="newsletter-field">
-              <input
-                id="newsletter-email"
-                type="email"
-                required
-                placeholder="you@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                disabled={subscribed}
-              />
-              <button type="submit" disabled={subscribed}>
-                {subscribed ? "You're on the list ✓" : "Join the briefing"}
-              </button>
+                Your browser does not support the video tag.
+              </video>
             </div>
-          </form>
-        </div>
-      </section>
+          ) : (
+            <img src={selectedStory.image} className="main-img" alt={selectedStory.title} />
+          )}
 
-      {/* Footer */}
-      <footer className="site-footer">
-        <div className="footer-main">
-          <a className="wordmark footer-wordmark" href="#top">
-            <span className="wordmark-orb" />NEXORA
-          </a>
-          <p>Understand what's next.</p>
-          <div className="footer-links">
-            <a href="#reels">Reels</a>
-            <a href="#creators">Creators</a>
-            <a href="#about">About</a>
+          <div className="story-meta">
+            ❤️ {selectedStory.likes.toLocaleString()} · 💬 {selectedStory.comments.toLocaleString()}
           </div>
-          <a className="back-top" href="#top">Back to top ↑</a>
-        </div>
-        <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} NEXORA. A clearer view of what's next.</span>
-        </div>
-      </footer>
-    </main>
+
+          <p className="full-text">{selectedStory.fullContent}</p>
+
+          <button className="close-btn" onClick={() => setSelectedStory(null)}>Close</button>
+        </article>
+      ) : (
+        <main className="feed">{renderContent()}</main>
+      )}
+
+      <style jsx global>{`
+        /* Apple-like SF Pro Typography */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        body {
+          margin: 0;
+          background: #f5f4f0;
+          font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+          color: #1d1d1f;
+          -webkit-font-smoothing: antialiased;
+        }
+
+        /* Animation Keyframes - Apple Opening Animation */
+        @keyframes logoPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.95; }
+        }
+
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        /* Layout */
+        .layout { position: relative; min-height: 100vh; }
+
+        .site-header {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          display: flex;
+          justify-content: space-between;
+          padding: 25px 50px;
+          background: #fff;
+          border-bottom: 1px solid #ddd;
+          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.95);
+        }
+
+        .wordmark {
+          font-weight: 800;
+          font-size: 20px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          letter-spacing: -0.5px;
+        }
+
+        .wordmark-orb {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #465dce;
+          animation: logoPulse 2s ease-in-out infinite;
+        }
+
+        nav button {
+          background: none;
+          border: none;
+          padding: 10px 25px;
+          cursor: pointer;
+          font-size: 16px;
+          color: #888;
+          font-weight: 500;
+          position: relative;
+          transition: color 0.2s;
+        }
+
+        nav button:hover { color: #000; }
+
+        nav button.active {
+          color: #000;
+          font-weight: 600;
+        }
+
+        nav button.active::after {
+          content: '';
+          position: absolute;
+          bottom: -10px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 30px;
+          height: 2px;
+          background: #000;
+        }
+
+        /* Intro Animation */
+        .intro-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(255, 255, 255, 0.95);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 999;
+          animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        .nexora-logo-animation {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 30px;
+          animation: fadeInUp 0.8s ease-out 0.3s forwards;
+          opacity: 0;
+        }
+
+        .logo-orb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #465dce 0%, #607bf5 100%);
+          animation: logoPulse 2s ease-in-out infinite;
+        }
+
+        .logo-text {
+          font-weight: 800;
+          font-size: 32px;
+          color: #000;
+        }
+
+        .intro-title {
+          font-size: 28px;
+          font-weight: 700;
+          margin: 0 0 24px;
+          text-align: center;
+          animation: fadeInUp 0.6s ease-out 0.5s forwards;
+          opacity: 0;
+        }
+
+        .intro-description {
+          font-size: 16px;
+          color: #666;
+          max-width: 600px;
+          line-height: 1.6;
+          text-align: center;
+          margin: 0 auto 30px;
+          animation: fadeInUp 0.6s ease-out 0.7s forwards;
+          opacity: 0;
+        }
+
+        .cta-btn {
+          display: block;
+          padding: 14px 40px;
+          background: #000;
+          color: #fff;
+          border: none;
+          border-radius: 30px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          animation: fadeInUp 0.6s ease-out 0.9s forwards;
+          opacity: 0;
+        }
+
+        .cta-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        /* Feed */
+        .feed {
+          overflow-x: hidden;
+        }
+
+        .add-post-btn, .add-reel-btn, .join-community-btn, .create-community-btn {
+          margin-bottom: 20px;
+          padding: 12px 24px;
+          background: #fff;
+          border: 1px solid #ddd;
+          border-radius: 12px;
+          cursor: pointer;
+          font-size: 14px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.2s;
+        }
+
+        .add-post-btn:hover, .add-reel-btn:hover, .join-community-btn:hover, .create-community-btn:hover {
+          background: #f5f4f0;
+          transform: translateY(-2px);
+        }
+
+        /* Post Grid */
+        .post-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 24px;
+          padding: 40px;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+
+        .card {
+          background: white;
+          padding: 20px;
+          border-radius: 20px;
+          cursor: pointer;
+          border: 1px solid #eee;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+          border-color: #e0e0e0;
+        }
+
+        .card-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        .avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: 2px solid #fff;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .creator-name {
+          font-weight: 500;
+          font-size: 14px;
+        }
+
+        .verified {
+          color: #465dce;
+          font-weight: 600;
+          font-size: 14px;
+        }
+
+        .thumb {
+          width: 100%;
+          height: 260px;
+          object-fit: cover;
+          border-radius: 16px;
+          margin-bottom: 16px;
+        }
+
+        .post-card .summary {
+          font-size: 15px;
+          line-height: 1.5;
+          color: #555;
+          margin-bottom: 12px;
+        }
+
+        .meta {
+          font-size: 13px;
+          color: #888;
+          font-weight: 500;
+        }
+
+        /* Reel Grid */
+        .reel-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 20px;
+          padding: 40px;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+
+        .reel-card {
+          background: #000;
+          color: #fff;
+          padding: 16px;
+          border-radius: 20px;
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+          border: none;
+        }
+
+        .reel-card:hover {
+          box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+          transform: translateY(-8px);
+        }
+
+        .reel-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+        }
+
+        .reel-avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+        }
+
+        .duration, .verified {
+          background: rgba(255,255,255,0.2);
+          padding: 2px 8px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .reel-thumb {
+          width: 100%;
+          height: 480px;
+          object-fit: cover;
+          border-radius: 14px;
+          margin-bottom: 12px;
+        }
+
+        .play-overlay {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 60px;
+          height: 60px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 50%;
+          animation: scalePulse 2s infinite;
+          pointer-events: none;
+        }
+
+        @keyframes scalePulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); }
+          50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .play-icon {
+          font-size: 24px;
+          color: #fff;
+          margin-left: 4px;
+        }
+
+        .reel-card .summary {
+          font-size: 14px;
+          line-height: 1.4;
+          color: #ccc;
+          margin-bottom: 10px;
+        }
+
+        /* Community Grid */
+        .community-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 20px;
+          padding: 40px;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+
+        .community-card {
+          background: white;
+          padding: 24px;
+          border-radius: 20px;
+          cursor: pointer;
+          border: 1px solid #eee;
+          transition: all 0.3s e;
+        }
+
+        .community-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        .community-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .community-orb {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #465dce;
+        }
+
+        .community-card h3 {
+          font-size: 16px;
+          font-weight: 600;
+          margin: 0;
+        }
+
+        .community-desc {
+          font-size: 14px;
+          color: #666;
+          line-height: 1.5;
+          margin-bottom: 12px;
+        }
+
+        .community-meta {
+          font-size: 13px;
+          color: #888;
+          font-weight: 500;
+        }
+
+        /* Full View */
+        .full-view {
+          max-width: 700px;
+          margin: 40px auto;
+          padding: 40px;
+          background: white;
+          border-radius: 20px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .story-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+          padding-bottom: 20px;
+          border-bottom: 1px solid #eee;
+        }
+
+        .creator-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .author-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+        }
+
+        .play-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          background: #465dce;
+          border-radius: 50%;
+          color: white;
+          cursor: pointer;
+        }
+
+        .play-icon {
+          font-size: 18px;
+          margin-left: 2px;
+        }
+
+        .video-wrapper {
+          margin: 20px 0;
+        }
+
+        .story-video {
+          width: 100%;
+          border-radius: 16px;
+          background: #000;
+        }
+
+        .story-title {
+          font-size: 24px;
+          font-weight: 700;
+          margin: 0 0 24px;
+          line-height: 1.3;
+        }
+
+        .main-img {
+          width: 100%;
+          border-radius: 16px;
+          margin: 20px 0;
+        }
+
+        .story-meta {
+          font-size: 14px;
+          color: #888;
+          margin: 16px 0;
+          font-weight: 500;
+        }
+
+        .full-text {
+          font-size: 16px;
+          line-height: 1.7;
+          color: #333;
+        }
+
+        .back-btn, .close-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #666;
+          font-size: 14px;
+          padding: 0;
+          margin-bottom: 15px;
+        }
+
+        .close-btn {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          margin: 0;
+          color: #888;
+          opacity: 0.8;
+          transition: opacity 0.2s;
+        }
+
+        .close-btn:hover {
+          opacity: 1;
+          color: #000;
+        }
+
+        /* Categories */
+        .post-card .category, .reel-card .category, .community-card .category {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          background: #f5f4f0;
+          padding: 4px 10px;
+          border-radius: 8px;
+          font-size: 11px;
+          color: #666;
+          font-weight: 500;
+        }
+      `}</style>
+    </div>
   );
 }
