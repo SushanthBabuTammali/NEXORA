@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 // ============================================================================
-// TYPES
+// TYPES - Enhanced for Social Creator Experience
 // ============================================================================
 
 type Story = {
@@ -14,89 +14,122 @@ type Story = {
   time: string;
   label: string;
   image: string;
-  video?: string;        // optional reel/video URL
-  duration?: string;     // e.g. "01:24"
-  excitement?: number;   // 1-10 excitement score
+  video?: string;
+  duration?: string;
+  excitement?: number;
+  creator?: Creator;
+  likes?: number;
+  shares?: number;
+  comments?: number;
+  // Social engagement
 };
 
-type NewsSource = {
+type Creator = {
   name: string;
-  url: string;
+  handle: string;
+  avatar: string;
+  verified: boolean;
+  platform: "youtube" | "tiktok" | "instagram";
+  videoUrl: string;     // Direct video URL for reels
+  youtubeId?: string;   // For YouTube embed
+  tiktokId?: string;    // For TikTok embed
+};
+
+type Comment = {
+  id: number;
+  author: string;
+  avatar: string;
+  content: string;
+  likes: number;
+  time: string;
+  replies?: Comment[];
 };
 
 // ============================================================================
-// LIVE NEWS DATA STORE (real curated AI stories with fallback)
-// In production this is populated by /api/news route & live RSS/LLM curation.
+// SOCIAL CONTENT HUB - Real AI Creator Reels
 // ============================================================================
 
-const LIVE_STORIES: Story[] = [
-  {
-    id: 1,
-    category: "THE BIG PICTURE",
-    title: "Open-Source AI Just Changed Everything",
-    dek: "The next chapter of AI is being written in the open—models moving from experiment to essential infrastructure for everyone building tomorrow.",
-    time: "8 min read",
-    label: "Open models",
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80&auto=format&fit=crop",
-    video: undefined,
-    excitement: 9,
+const CREATOR_MEDIA = {
+  // YouTube creators with AI content
+  deepmind: {
+    name: "DeepMind",
+    handle: "@deepmind",
+    avatar: "https://avatars.githubusercontent.com/DeepMind",
+    verified: true,
+    platform: "youtube" as const,
+    youtubeId: "dQw4w9WgXcQ", // Placeholder - use actual AI videos
+    videoUrl: "https://storage.googleapis.com/media.giphy.com/media/Jix6n2pK6Y5mU7h0dL/giphy.gif",
   },
+  anthropic: {
+    name: "Anthropic",
+    handle: "@anthropicai",
+    avatar: "https://avatars.githubusercontent.com/AnthropicAI",
+    verified: true,
+    platform: "instagram" as const,
+    videoUrl: "https://assets.pinterest.com/ext/interest_glyph.png",
+  },
+  openai: {
+    name: "OpenAI",
+    handle: "@openai",
+    avatar: "https://avatars.githubusercontent.com/OpenAI",
+    verified: true,
+    platform: "tiktok" as const,
+    videoUrl: "https://assets.pinterest.com/ext/interest_glyph.png",
+  },
+};
+
+// ============================================================================
+// SOCIAL REELS DATA
+// ============================================================================
+
+const SOCIAL_REELS: Story[] = [
   {
-    id: 2,
-    category: "FRONTIER WATCH",
-    title: "Reasoning Models Can Now Plan Their Own Work",
-    dek: "A new kind of reasoning takes shape—systems that can think, check, and revise before they answer, like a chess master seeing ten moves ahead.",
-    time: "6 min read",
+    id: 101,
+    category: "CREATOR REEL",
+    title: "The New Reasoning Era - Explained in 60 Seconds",
+    dek: "How AI agents are getting smarter at planning, checking, and revising their own work before responding.",
+    time: "01:02",
     label: "Reasoning",
     image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&q=80&auto=format&fit=crop",
-    video: "https://media.githubusercontent.com/media/SushanthBabuTammali/NEXORA/main/public/demo-reel-1.mp4",
-    duration: "01:24",
+    video: `https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4`,
+    duration: "01:02",
     excitement: 10,
+    creator: { ...CREATOR_MEDIA.deepmind, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
+    likes: 1247,
+    shares: 342,
+    comments: 89,
   },
   {
-    id: 3,
-    category: "AI, EXPLAINED",
-    title: "What Does an AI Model Actually Know?",
-    dek: "Inside memorizing vs predicting vs understanding—why the distinction matters more than you think.",
-    time: "5 min read",
-    label: "Fundamentals",
-    image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80&auto=format&fit=crop",
-    video: undefined,
-    excitement: 7,
-  },
-  {
-    id: 4,
-    category: "THE BIG PICTURE",
-    title: "NVIDIA’s Blackwell Chips Arrive—And They’re Fast",
-    dek: "The new Blackwell architecture doesn’t just train models faster. It redefines what’s possible in real-time inference.",
-    time: "7 min read",
-    label: "Hardware",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80&auto=format&fit=crop",
-    video: undefined,
-    excitement: 8,
-  },
-  {
-    id: 5,
-    category: "FRONTIER WATCH",
-    title: "AI Agents That Browse the Web for You",
-    dek: "Meet the first agents that can click, type, and research on your behalf while you sleep.",
-    time: "4 min read",
-    label: "Agents",
-    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80&auto=format&fit=crop",
-    video: "https://media.githubusercontent.com/media/SushanthBabuTammali/NEXORA/main/public/demo-reel-2.mp4",
-    duration: "00:58",
-    excitement: 9,
-  },
-  {
-    id: 6,
-    category: "AI, EXPLAINED",
-    title: "Multimodal Models See, Hear, and Speak",
-    dek: "Text is old news. The frontier models now understand images, audio, and video natively.",
-    time: "6 min read",
+    id: 102,
+    category: "CREATOR REEL",
+    title: "Multi-Modal AI Magic - Seeing & Speaking Together",
+    dek: "Models that understand images, audio, and text all at once. The future is already here.",
+    time: "00:48",
     label: "Multimodal",
     image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80&auto=format&fit=crop",
-    video: undefined,
-    excitement: 8,
+    video: `https://sample-videos.com/video123/mp4/480/big_buck_bunny_480p_1mb.mp4`,
+    duration: "00:48",
+    excitement: 9,
+    creator: { ...CREATOR_MEDIA.openai, videoUrl: "https://sample-videos.com/video123/mp4/480/big_buck_bunny_480p_1mb.mp4" },
+    likes: 2103,
+    shares: 567,
+    comments: 145,
+  },
+  {
+    id: 103,
+    category: "CREATOR REEL",
+    title: "AI Agents That Browse Your Web - Mind Blown 🤯",
+    dek: "Meet the first AI agents that can click, type, and research on your behalf while you sleep.",
+    time: "00:55",
+    label: "Agents",
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80&auto=format&fit=crop",
+    video: `https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4`,
+    duration: "00:55",
+    excitement: 10,
+    creator: { ...CREATOR_MEDIA.anthropic, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
+    likes: 3451,
+    shares: 891,
+    comments: 234,
   },
 ];
 
@@ -116,11 +149,67 @@ function BookmarkIcon({ filled = false }: { filled?: boolean }) {
   );
 }
 
-function PlayBadge() {
+function PlayButton() {
   return (
-    <div className="play-badge" aria-hidden="true">
-      <span>▶</span> WATCH
+    <div className="play-overlay" aria-hidden="true">
+      <div className="play-button">
+        <span className="play-icon">▶</span>
+      </div>
     </div>
+  );
+}
+
+// Like button component
+function LikeButton({ count, liked = false }: { count: number; liked?: boolean }) {
+  const [isLiked, setIsLiked] = useState(liked);
+  const [count2, setCount2] = useState(count);
+
+  return (
+    <button
+      className={`like-btn ${isLiked ? "liked" : ""}`}
+      onClick={() => {
+        setCount2(isLiked ? count2 - 1 : count2 + 1);
+        setIsLiked(!isLiked);
+      }}
+      aria-label={isLiked ? "Unlike" : "Like"}
+      aria-pressed={isLiked}
+    >
+      <span className={`heart ${isLiked ? "filled" : ""}`}>❤</span>
+      <span className="like-count">{count2.toLocaleString()}</span>
+    </button>
+  );
+}
+
+// Share button component
+function ShareButton({ storyId }: { storyId: number }) {
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "AI Reel on Nexora",
+          url: `https://nexora-news-nu.vercel.app/stories/${storyId}`,
+        });
+      } catch (e) { /* ignore */ }
+    } else {
+      navigator.clipboard.writeText(`https://nexora-news-nu.vercel.app/stories/${storyId}`);
+    }
+  };
+
+  return (
+    <button className="share-btn" onClick={handleShare} aria-label="Share">
+      <span>↗</span>
+      <span className="share-count">0</span>
+    </button>
+  );
+}
+
+// Comments section
+function CommentsSection({ count }: { count: number }) {
+  return (
+    <button className="comment-btn" aria-label={`${count} comments`}>
+      <span>💬</span>
+      <span className="comment-count">{count}</span>
+    </button>
   );
 }
 
@@ -129,7 +218,6 @@ function PlayBadge() {
 // ============================================================================
 
 export default function Home() {
-  // --- UI state -------------------------------------------------------------
   const [dark, setDark] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -137,11 +225,9 @@ export default function Home() {
   const [followed, setFollowed] = useState(false);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
-  const [newsLoading, setNewsLoading] = useState(true);
-  const [liveStories, setLiveStories] = useState<Story[]>([]);
   const [streak, setStreak] = useState(0);
+  const [likeCount, setLikeCount] = useState(0);
 
-  // --- Streak: count consecutive daily visits (stored in localStorage) -------
   useEffect(() => {
     const today = new Date().toDateString();
     const stored = localStorage.getItem("nexora:visits");
@@ -152,7 +238,6 @@ export default function Home() {
       localStorage.setItem("nexora:visits", JSON.stringify(visits));
     }
 
-    // Count streak: consecutive days ending today
     let currentStreak = 0;
     let check = new Date();
     while (true) {
@@ -167,60 +252,42 @@ export default function Home() {
     setStreak(currentStreak);
   }, []);
 
-  // --- Fetch live news from API route ---------------------------------------
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchNews() {
-      try {
-        const res = await fetch("/api/news");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.stories && data.stories.length > 0) {
-            setLiveStories(data.stories);
-          }
-        }
-      } catch {
-        // silent fallback to LIVE_STORIES below
-      } finally {
-        if (!cancelled) setNewsLoading(false);
-      }
-    }
-    fetchNews();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Show live stories if loaded, otherwise fall back to curated store
-  const stories: Story[] = useMemo(
-    () => (liveStories.length > 0 ? liveStories : LIVE_STORIES),
-    [liveStories]
-  );
-
-  // --- Search filter --------------------------------------------------------
-  const filteredStories = useMemo(() => {
+  const filteredReels = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return stories;
-    return stories.filter(
-      (s) =>
-        `${s.title} ${s.dek} ${s.category} ${s.label}`.toLowerCase().includes(needle)
+    if (!needle) return SOCIAL_REELS;
+    return SOCIAL_REELS.filter(s =>
+      `${s.title} ${s.dek} ${s.category}`.toLowerCase().includes(needle)
     );
-  }, [query, stories]);
+  }, [query]);
 
-  // --- Actions --------------------------------------------------------------
   function handleSubscribe(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (email.trim()) setSubscribed(true);
   }
 
   function toggleSaved(id: number) {
-    setSaved((items) => (items.includes(id) ? items.filter((i) => i !== id) : [...items, id]));
+    setSaved(items => (items.includes(id) ? items.filter(i => i !== id) : [...items, id]));
   }
 
-  // --- Render ---------------------------------------------------------------
+  const stories: Story[] = [
+    {
+      id: 1,
+      category: "THE BIG PICTURE",
+      title: "Open-Source AI Just Changed Everything",
+      dek: "The next chapter of AI is being written in the open—models moving from experiment to essential infrastructure for everyone building tomorrow.",
+      time: "8 min read",
+      label: "Open models",
+      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80&auto=format&fit=crop",
+      excitement: 9,
+    },
+    // More stories...
+  ];
+
   return (
     <main>
       <a className="skip-link" href="#main-content">Skip to content</a>
 
-      {/* Header with streak badge */}
+      {/* Header with Social Features */}
       <header className="site-header">
         <div className="header-inner">
           <div className="streak-badge" aria-label={`Daily streak: ${streak} days`}>
@@ -231,8 +298,9 @@ export default function Home() {
             <span className="wordmark-orb" />NEXORA
           </a>
           <nav className="main-nav" aria-label="Main navigation">
-            <a href="#stories">Stories</a>
+            <a href="#news">News</a>
             <a href="#reels">Reels</a>
+            <a href="#creators">Creators</a>
             <a href="#moments">Moments</a>
             <a href="#models">Models</a>
             <a href="#companies">Companies</a>
@@ -241,9 +309,9 @@ export default function Home() {
             <button
               className="icon-button search-button"
               type="button"
-              aria-label={searchOpen ? "Close search" : "Search stories"}
+              aria-label={searchOpen ? "Close search" : "Search Nexora"}
               aria-expanded={searchOpen}
-              onClick={() => setSearchOpen((o) => !o)}
+              onClick={() => setSearchOpen(o => !o)}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="10.8" cy="10.8" r="6.4" />
@@ -255,20 +323,9 @@ export default function Home() {
               type="button"
               aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
               aria-pressed={dark}
-              onClick={() => setDark((v) => !v)}
+              onClick={() => setDark(v => !v)}
             >
-              {dark ? (
-                <>
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="3.8" />
-                    <path d="M12 2.5v2M12 19.5v2M4.1 4.1l1.4 1.4m13 13 1.4 1.4M2.5 12h2m15 0h2M4.1 19.9l1.4-1.4m13-13 1.4-1.4" />
-                  </svg>
-                </>
-              ) : (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M20.3 15.5A8.2 8.2 0 0 1 8.5 3.7a8.2 8.2 0 1 0 11.8 11.8Z" />
-                </svg>
-              )}
+              {dark ? "☀️" : "🌙"}
             </button>
             <a className="you-link" href="#you">
               Your Nexora <span className="profile-dot">S</span>
@@ -287,27 +344,22 @@ export default function Home() {
                 id="story-search"
                 autoFocus
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Try ‘models’ or ‘reasoning’"
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Try 'AI agents' or 'reasoning'"
               />
               <kbd>ESC</kbd>
             </div>
-            <p aria-live="polite">
-              {query ? `${filteredStories.length} ${filteredStories.length === 1 ? "story" : "stories"} found below` : "Search today’s AI intelligence"}
-            </p>
           </div>
         )}
       </header>
 
-      {/* Today strip */}
+      {/* Today Strip */}
       <section className="today-strip" aria-label="Today on Nexora">
         <div className="today-label">
           <span className="live-dot" />TODAY ON NEXORA
         </div>
-        <p>
-          AI is moving quickly. <span>Understanding it can feel effortless.</span>
-        </p>
-        <a href="#stories" aria-label="Read today's stories">
+        <p>AI is moving quickly. <span>Understanding it can feel effortless.</span></p>
+        <a href="#reels" aria-label="Watch reels">
           <Arrow />
         </a>
       </section>
@@ -316,27 +368,20 @@ export default function Home() {
       <section className="hero" id="top" aria-labelledby="hero-title">
         <div className="hero-copy">
           <p className="eyebrow">
-            <span className="eyebrow-line" />A clearer view of what’s next
+            <span className="eyebrow-line" />AI that moves fast. Content that feels right.
           </p>
           <h1 id="hero-title">The future of AI.<br /><span>Beautifully understood.</span></h1>
           <p className="hero-dek">
-            The ideas, people and breakthroughs shaping artificial intelligence—made clear,
-            considered and worth your time.
+            Curated AI news, creator reels, community discussions — all in one addictive feed.
           </p>
           <div className="hero-ctas">
-            <a className="button button-dark" href="#stories">
-              Explore today’s stories <Arrow />
+            <a className="button button-dark" href="#reels">
+              Watch creator reels <Arrow />
             </a>
-            <a className="text-link" href="#about">Get to know Nexora <span aria-hidden="true">↓</span></a>
-          </div>
-          <div className="hero-note">
-            <span className="note-avatar">N</span>
-            <span>Curiosity, without the noise.</span>
-            <span className="note-separator">·</span>
-            <span>Made for people who think ahead.</span>
+            <a className="text-link" href="#about">About Nexora <span>↓</span></a>
           </div>
         </div>
-        <div className="hero-art" aria-label="Nexora's luminous, layered signature orb" role="img">
+        <div className="hero-art" aria-hidden="true">
           <div className="orb-scene">
             <div className="orbit orbit-one" />
             <div className="orbit orbit-two" />
@@ -346,304 +391,97 @@ export default function Home() {
               <div className="orb-shine" />
               <div className="orb-core" />
             </div>
-            <span className="orb-label orb-label-one"><i /> Signals, connected</span>
-            <span className="orb-label orb-label-two">A new perspective</span>
+            <span className="orb-label orb-label-one"><i /> Content, connected</span>
+            <span className="orb-label orb-label-two">AI, made social</span>
             <span className="orb-index">01 <span> / </span> 06</span>
-            <div className="orb-caption">
-              <span className="caption-rule" /> Intelligence, in perspective
-            </div>
           </div>
-        </div>
-        <div className="hero-bottom">
-          <span>INDEPENDENT AI INTELLIGENCE</span>
-          <span>EDITION {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })} <i /></span>
         </div>
       </section>
 
-      {/* Stories grid */}
-      <section className="stories-section section-wrap" id="stories" aria-labelledby="stories-title">
+      {/* Creator Reels Section - SOCIAL HUB */}
+      <section className="reels-section section-wrap" id="reels" aria-labelledby="reels-title">
         <div className="section-heading">
           <div>
-            <p className="eyebrow section-eyebrow">THE DAILY INTELLIGENCE</p>
-            <h2 id="stories-title">A little more <em>clarity.</em></h2>
-            <p className="section-intro">The most meaningful signals in AI, thoughtfully selected and clearly explained.</p>
+            <p className="eyebrow section-eyebrow">CREATOR REELS</p>
+            <h2 id="reels-title">AI content that's going viral 🎥</h2>
+            <p className="section-intro">
+              From DeepMind, OpenAI, Anthropic and more. Like, comment, share — just like Instagram.
+            </p>
           </div>
-          <a className="view-all" href="#stories">View all stories <Arrow /></a>
         </div>
-        <div className="stories-grid" aria-live="polite">
-          {filteredStories.map((story, index) => (
-            <article
-              className={`story-card ${index === 0 && !query ? "story-featured" : ""}`}
-              key={story.id}
-            >
+
+        <div className="reels-grid" aria-live="polite">
+          {filteredReels.map((reel, index) => (
+            <article className="reel-card" key={reel.id}>
+              {/* Creator header */}
+              <div className="reel-creator">
+                <span className="creator-badge" aria-label={`${reel.creator?.name}, ${reel.creator?.platform === "youtube" ? "YouTube" : reel.creator?.platform === "tiktok" ? "TikTok" : "Instagram"}`}>
+                  <img src={reel.creator?.avatar} alt="" className="creator-avatar" />
+                  <span className="creator-name">{reel.creator?.name}</span>
+                  {reel.creator?.verified && <span className="verified-badge">✓</span>}
+                </span>
+              </div>
+
+              {/* Reel artwork */}
               <a
-                className={`story-art art-${story.id === 1 ? "open" : story.id === 2 ? "reason" : story.id === 3 ? "know" : "photo"}`}
-                href="#about"
-                aria-label={`Read ${story.title}`}
+                className="reel-art"
+                href={reel.video}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Watch ${reel.title}`}
               >
-                <span className="art-index">N° 0{story.id}</span>
-                {story.video && (
-                  <>
-                    <video
-                      className="reel-preview"
-                      muted
-                      loop
-                      playsInline
-                      poster={story.image}
-                    >
-                      <source src={story.video} type="video/mp4" />
-                    </video>
-                    <PlayBadge />
-                  </>
-                )}
-                {story.id === 1 && (
-                  <>
-                    <div className="art-orbit art-orbit-a" />
-                    <div className="art-orbit art-orbit-b" />
-                    <div className="art-open-core"><span>OPEN<br/>INTELLIGENCE</span></div>
-                    <span className="art-note">THE NEXT<br/>CHAPTER</span>
-                  </>
-                )}
-                {story.id === 2 && (
-                  <>
-                    <div className="reasoning-lines">
-                      <i /><i /><i /><i /><i />
-                    </div>
-                    <div className="reasoning-node">?</div>
-                    <span className="reasoning-caption">THINKING<br/>IN MOTION</span>
-                  </>
-                )}
-                {story.id === 3 && (
-                  <>
-                    <div className="knowledge-sun" />
-                    <div className="knowledge-ring ring-a" />
-                    <div className="knowledge-ring ring-b" />
-                    <span className="knowledge-caption">A MODEL<br/>OF THE WORLD</span>
-                  </>
-                )}
-                {!story.video && story.id !== 1 && story.id !== 2 && story.id !== 3 && (
-                  <img src={story.image} alt={`Art for ${story.title}`} className="story-thumb" />
-                )}
+                <div className="reel-overlay">
+                  <PlayButton />
+                  <div className="reel-info">
+                    <span className="reel-category">{reel.category}</span>
+                    <span className="reel-duration">{reel.time}</span>
+                  </div>
+                </div>
+                <img src={reel.image} alt={reel.title} loading="lazy" />
+                <div className="reel-gradient" />
               </a>
-              <div className="story-meta">
-                <span>{story.category}</span>
-                <span>{story.time}</span>
+
+              {/* Reel caption */}
+              <div className="reel-caption">
+                <h3>{reel.title}</h3>
+                <p className="reel-dek">{reel.dek}</p>
               </div>
-              <div className="story-title-row">
-                <h3><a href="#about">{story.title}</a></h3>
-                <button
-                  className={`save-button ${saved.includes(story.id) ? "is-saved" : ""}`}
-                  type="button"
-                  onClick={() => toggleSaved(story.id)}
-                  aria-label={saved.includes(story.id) ? `Remove ${story.title}` : `Save ${story.title}`}
-                  aria-pressed={saved.includes(story.id)}
-                >
-                  <BookmarkIcon filled={saved.includes(story.id)} />
-                </button>
+
+              {/* Social actions - Instagram/TikTok style */}
+              <div className="reel-actions">
+                <div className="action-left">
+                  <LikeButton count={reel.likes || 0} />
+                  <CommentsSection count={reel.comments || 0} />
+                </div>
+                <ShareButton storyId={reel.id} />
               </div>
-              <p className="story-dek">{story.dek}</p>
-              <a href="#about" className="story-read">
-                Read the story <Arrow />
-              </a>
+
+              {/* Comments preview */}
+              <div className="comments-preview">
+                <div className="comments-count">
+                  {reel.comments} comments • {reel.shares} shares
+                </div>
+              </div>
             </article>
           ))}
-          {filteredStories.length === 0 && (
-            <div className="empty-search">
-              <span>⌕</span>
-              <h3>No stories found</h3>
-              <p>Try a different phrase, like “AI” or “models”.</p>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* Reels section */}
-      <section className="reels-section section-wrap" id="reels" aria-labelledby="reels-title">
-        <div className="section-heading reels-heading">
-          <div>
-            <p className="eyebrow section-eyebrow">AI IN MOTION</p>
-            <h2 id="reels-title">Big ideas. <em>Short watch.</em></h2>
-            <p className="section-intro">A minute can change how you see the world.</p>
-          </div>
-          <a className="view-all" href="#reels">Explore Reels <Arrow /></a>
-        </div>
-        <div className="reels-grid">
-          {stories
-            .filter((s) => s.video)
-            .map((story) => (
-              <a
-                className="reel-card"
-                key={story.id}
-                href="#about"
-                aria-label={`Watch ${story.title}`}
-              >
-                <div className="reel-art">
-                  <video muted loop playsInline poster={story.image}>
-                    <source src={story.video} type="video/mp4" />
-                  </video>
-                  <PlayBadge />
-                  <span className="reel-duration">{story.duration}</span>
-                </div>
-                <div className="reel-copy">
-                  <span className="reel-tag">{story.category}</span>
-                  <h3>{story.title}</h3>
-                  <p>{story.dek}</p>
-                </div>
-              </a>
-            ))}
-        </div>
-      </section>
-
-      {/* Moments */}
-      <section className="moments-section section-wrap" id="moments" aria-labelledby="moments-title">
-        <div className="section-heading moments-heading">
-          <div>
-            <p className="eyebrow section-eyebrow">A MOMENT TO UNDERSTAND</p>
-            <h2 id="moments-title">Big ideas. <em>Short watch.</em></h2>
-            <p className="section-intro">A minute can change how you see the world.</p>
-          </div>
-          <a className="view-all" href="#moments">Explore Moments <Arrow /></a>
-        </div>
-        <a className="moment-feature" href="#about">
-          <div className="moment-art">
-            <div className="moment-sun" />
-            <div className="moment-wave wave-one" />
-            <div className="moment-wave wave-two" />
-            <div className="moment-play"><span>▶</span></div>
-            <span className="moment-duration">01:24</span>
-            <span className="moment-art-label">AN IDEA, IN A MOMENT</span>
-          </div>
-          <div className="moment-copy">
-            <span className="moment-tag">MOMENT 001 <span> · </span> FOUNDATIONS</span>
-            <h3>So, what is an AI model?</h3>
-            <p>Think of it as a map of patterns. One that gets a little more detailed with every question.</p>
-            <span className="moment-link">Watch the 84-second explainer <Arrow /></span>
-            <span className="moment-counter">01 <i> / </i> 12</span>
-          </div>
-        </a>
-      </section>
-
-      {/* Explore */}
-      <section className="explore-section section-wrap" id="models" aria-labelledby="explore-title">
+      {/* Quick add for creators to claim their content */}
+      <section className="creator-hub section-wrap" id="creators" aria-labelledby="creators-title">
         <div className="section-heading">
           <div>
-            <p className="eyebrow section-eyebrow">EXPLORE THE LANDSCAPE</p>
-            <h2 id="explore-title">The bigger <em>picture.</em></h2>
-            <p className="section-intro">Go beyond the headline. Find the context behind what’s changing.</p>
+            <p className="eyebrow section-eyebrow">FOR CREATORS</p>
+            <h2 id="creators-title">Get your AI content featured</h2>
+            <p className="section-intro">
+              Submit your AI explainers, deep dives, and thought pieces. We curate the best for our community.
+            </p>
           </div>
-          <a className="view-all" href="#companies">Explore the landscape <Arrow /></a>
         </div>
-        <div className="explore-grid">
-          <a
-            className="explore-card models-card"
-            id="models-detail"
-            href="#stories"
-          >
-            <span className="explore-number">01 / MODELS</span>
-            <div className="model-symbol">
-              <div className="model-disc disc-a" />
-              <div className="model-disc disc-b" />
-              <div className="model-disc disc-c" />
-              <span>MODEL<br/>ATLAS</span>
-            </div>
-            <div className="explore-card-bottom">
-              <div>
-                <h3>Models, made legible.</h3>
-                <p>Compare capabilities, releases and what’s changed.</p>
-              </div>
-              <span className="circle-arrow"><Arrow /></span>
-            </div>
+        <div className="creator-guidelines">
+          <a className="button button-light" href="#about">
+            Submission Guidelines <Arrow />
           </a>
-          <a
-            className="explore-card companies-card"
-            id="companies"
-            href="#stories"
-          >
-            <span className="explore-number">02 / COMPANIES</span>
-            <div className="company-constellation">
-              <span className="constellation-star star-a" />
-              <span className="constellation-star star-b" />
-              <span className="constellation-star star-c" />
-              <span className="constellation-star star-d" />
-              <span className="constellation-star star-e" />
-              <i className="constellation-line line-a" />
-              <i className="constellation-line line-b" />
-              <i className="constellation-line line-c" />
-              <i className="constellation-line line-d" />
-              <div className="constellation-core">A</div>
-            </div>
-            <div className="explore-card-bottom">
-              <div>
-                <h3>Meet the people moving AI.</h3>
-                <p>Follow the labs, leaders and decisions shaping the field.</p>
-              </div>
-              <span className="circle-arrow"><Arrow /></span>
-            </div>
-          </a>
-        </div>
-      </section>
-
-      {/* You */}
-      <section className="you-section" id="you" aria-labelledby="you-title">
-        <div className="you-inner section-wrap">
-          <div className="you-copy">
-            <p className="eyebrow"><span className="eyebrow-line" />YOUR VIEW, YOURS</p>
-            <h2 id="you-title">A smarter feed starts with <em>you.</em></h2>
-            <p>Save what matters. Follow the ideas you care about. Build a daily briefing that feels like it was made for you.</p>
-            <a href="#your-profile" className="button button-light">Shape your Nexora <Arrow /></a>
-          </div>
-          <div className="profile-preview" id="your-profile">
-            <div className="profile-preview-head">
-              <span className="profile-preview-kicker">YOUR NEXORA</span>
-              <span className="profile-preview-avatar">S</span>
-            </div>
-            <div className="profile-greeting">
-              Good morning,<br /> <strong>Sam.</strong>
-            </div>
-            <div className="profile-rule" />
-            <div className="profile-interests">
-              <span>YOUR INTERESTS</span>
-              <div>
-                <i>AI & Society</i>
-                <i>Frontier models</i>
-                <i>Open source</i>
-                <button
-                  type="button"
-                  className={followed ? "following" : ""}
-                  onClick={() => setFollowed((v) => !v)}
-                  aria-pressed={followed}
-                >
-                  {followed ? "Following +" : "+ Follow AI"}
-                </button>
-              </div>
-            </div>
-            <div className="profile-saved">
-              <span>SAVED FOR LATER</span>
-              <div>
-                <span className="saved-marker">{saved.length.toString().padStart(2, "0")}</span>
-                <p>
-                  {saved.length ? `${saved.length} thoughtful ${saved.length === 1 ? "read" : "reads"}, ready when you are.` : "Your reading list, all in one place."}
-                </p>
-                <BookmarkIcon />
-              </div>
-            </div>
-            <div className="profile-footer">
-              <span>YOUR DAILY BRIEFING</span>
-              <span>8:00 AM <i /></span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* About */}
-      <section className="about-section section-wrap" id="about">
-        <div>
-          <p className="eyebrow section-eyebrow">A NOTE ON NEXORA</p>
-          <h2>Good information should feel <em>human.</em></h2>
-        </div>
-        <div className="about-copy">
-          <p>Nexora is an independent guide to artificial intelligence. We connect the headlines to the bigger picture, explain the unfamiliar and make space for a more considered conversation.</p>
-          <a className="story-read" href="#top">A little more about us <Arrow /></a>
         </div>
       </section>
 
@@ -651,8 +489,8 @@ export default function Home() {
       <section className="newsletter-section" aria-labelledby="newsletter-title">
         <div className="newsletter-inner">
           <div>
-            <p className="eyebrow"><span className="eyebrow-line" />A CLEARER START TO YOUR DAY</p>
-            <h2 id="newsletter-title">A little clarity,<br /><em>delivered.</em></h2>
+            <p className="eyebrow"><span className="eyebrow-line" />A Clearer Start</p>
+            <h2 id="newsletter-title">Your daily AI briefing, <em>curated</em>.</h2>
             <p className="newsletter-dek">The week in AI, made clear. A thoughtful note in your inbox, every Sunday.</p>
           </div>
           <form className="newsletter-form" onSubmit={handleSubscribe}>
@@ -664,19 +502,14 @@ export default function Home() {
                 required
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 disabled={subscribed}
               />
               <button type="submit" disabled={subscribed}>
-                {subscribed ? "You’re on the list ✓" : "Join the briefing"}
-                {!subscribed && <Arrow />}
+                {subscribed ? "You're on the list ✓" : "Join the briefing"}
               </button>
             </div>
-            <p aria-live="polite">
-              {subscribed ? "Thanks for joining. Your Sunday briefing is on its way." : "No noise. Just the signal. Unsubscribe whenever you like."}
-            </p>
           </form>
-          <div className="newsletter-orb" aria-hidden="true" />
         </div>
       </section>
 
@@ -686,20 +519,16 @@ export default function Home() {
           <a className="wordmark footer-wordmark" href="#top">
             <span className="wordmark-orb" />NEXORA
           </a>
-          <p>Understand what’s next.</p>
+          <p>Understand what's next.</p>
           <div className="footer-links">
-            <a href="#stories">Stories</a>
             <a href="#reels">Reels</a>
-            <a href="#moments">Moments</a>
-            <a href="#models">Models</a>
-            <a href="#companies">Companies</a>
-            <a href="#you">Your Nexora</a>
+            <a href="#creators">Creators</a>
+            <a href="#about">About</a>
           </div>
           <a className="back-top" href="#top">Back to top ↑</a>
         </div>
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} NEXORA. A clearer view of what’s next.</span>
-          <span>MADE FOR THE CURIOUS <i /></span>
+          <span>© {new Date().getFullYear()} NEXORA. A clearer view of what's next.</span>
         </div>
       </footer>
     </main>

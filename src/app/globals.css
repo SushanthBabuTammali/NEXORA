@@ -388,9 +388,124 @@ a:hover .arrow, button:hover .arrow { transform: translate(2px, -2px); }
   .newsletter-field input { padding: 11px 0; }
   .newsletter-field button { justify-content: center; }
 }
+
+/* ============================================================================
+   STREAK BADGE
+   ============================================================================ */
 .streak-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 100px; border: 1px solid var(--line); background: var(--paper); font-size: 10px; font-weight: 600; letter-spacing: .1em; color: var(--ink); }
 .streak-label { color: var(--muted); font-weight: 500; letter-spacing: .04em; }
 .streak-count { color: var(--accent); }
+
+/* ============================================================================
+   PLAY BADGE FOR REELS
+   ============================================================================ */
+.play-badge { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #fff8; background: #0005; color: #fff; display: grid; place-items: center; font-size: 11px; letter-spacing: .05em; transform: translate(-50%, -50%) scale(.95); opacity: 0; transition: opacity .25s ease, transform .25s ease; pointer-events: none; z-index: 4; }
+.story-art:hover .play-badge, .reel-art:hover .play-badge { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+/* ============================================================================
+   REEL VIDEO PREVIEW
+   ============================================================================ */
+.reel-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Story thumbnail */
+.story-thumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+
+/* ============================================================================
+   REELS SECTION - MAIN GRID
+   ============================================================================ */
+.reels-section { padding: 90px 0 135px; border-top: 1px solid var(--line); }
+.reels-heading .section-eyebrow { color: var(--accent); }
+.reels-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 4px; }
+.reel-card { position: relative; min-height: 380px; border: 1px solid var(--line); background: var(--paper); overflow: hidden; transition: border-color .2s, transform .2s; display: flex; flex-direction: column; }
+.reel-card:hover { border-color: #8d97ce; transform: translateY(-2px); }
+.reel-art { position: relative; width: 100%; aspect-ratio: 9 / 16; overflow: hidden; isolation: isolate; background: var(--soft-line); }
+.reel-art video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .35s ease; }
+.reel-card:hover .reel-art video { opacity: 1; }
+.reel-copy { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px 19px; flex: 1; }
+.reel-tag { color: var(--accent); font-size: 8px; letter-spacing: .15em; }
+.reel-copy h3 { margin: 4px 0 7px; font: 22px/1.12 var(--serif); font-weight: 400; letter-spacing: -.03em; color: var(--ink); }
+.reel-copy h3:hover { color: var(--accent); }
+.reel-copy p { color: var(--muted); font-size: 11px; line-height: 1.65; }
+.reel-duration { position: absolute; left: 12px; bottom: 14px; padding: 5px 9px; border: 1px solid #ffffff59; border-radius: 100px; color: #fff; font-size: 8px; letter-spacing: .14em; background: #0005; }
+
+/* ============================================================================
+   SOCIAL ENGAGEMENT BUTTONS - Instagram/TikTok Style
+   ============================================================================ */
+.reel-actions { display: flex; justify-content: space-between; align-items: center; padding: 0 20px 16px; margin-top: auto; }
+.action-left { display: flex; gap: 18px; }
+
+.like-btn { display: flex; align-items: center; gap: 6px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink); transition: color .2s; }
+.like-btn.liked { color: #e02424; }
+.like-btn .heart { font-size: 18px; }
+.like-btn.filled { color: #e02424; }
+.like-count { min-width: 20px; text-align: center; }
+
+.comment-btn { display: flex; align-items: center; gap: 6px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink); transition: color .2s; }
+.comment-btn:hover { color: var(--accent); }
+.comment-count { min-width: 20px; text-align: center; }
+
+.share-btn { display: flex; align-items: center; gap: 6px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink); transition: color .2s; }
+.share-btn:hover { color: var(--accent); }
+.share-count { min-width: 20px; text-align: center; }
+
+/* ============================================================================
+   CREATOR BADGE
+   ============================================================================ */
+.reel-creator { padding: 12px 20px; }
+.creator-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 100px; border: 1px solid var(--line); background: var(--paper); font-size: 11px; font-weight: 500; color: var(--ink); }
+.creator-avatar { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.creator-name { color: var(--ink); font-weight: 500; }
+.verified-badge { color: #656bff; font-size: 12px; font-weight: 600; }
+
+/* ============================================================================
+   REEL ART WITH OVERLAY
+   ============================================================================ */
+.reel-art-wrap { position: relative; }
+.reel-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 60%, #000); display: flex; justify-content: space-between; align-items: flex-end; padding: 14px 14px 10px; color: #fff; font-size: 11px; letter-spacing: .1em; opacity: 0; transition: opacity .3s; }
+.reel-art-wrap:hover .reel-overlay { opacity: 1; }
+.reel-category { background: rgba(255,255,255,0.9); color: #181a1c; padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+.reel-duration { background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 4px; }
+.play-icon { font-size: 24px; color: #fff; font-weight: 600; }
+
+/* ============================================================================
+   COMMENTS PREVIEW
+   ============================================================================ */
+.comments-preview { padding: 0 20px; }
+.comments-count { color: var(--muted); font-size: 11px; }
+
+/* ============================================================================
+   SOCIAL REELS CARDS - INSTAGRAM STYLE
+   ============================================================================ */
+.social-reel { min-height: auto; display: flex; flex-direction: column; }
+.social-reel-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+.social-reel-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.social-reel-likes { color: #e02424; font-weight: 600; }
+.social-reel-comments { color: var(--muted); font-size: 11px; }
+
+/* ============================================================================
+   NEWS STORIES - ENHANCED WITH SOCIAL
+   ============================================================================ */
+.story-social-actions { display: flex; gap: 16px; padding: 0 8px; }
+.story-social-actions button { flex: 0 0 auto; }
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS FOR SOCIAL REELS
+   ============================================================================ */
+@media (max-width: 1200px) {
+  .reels-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .reels-grid { grid-template-columns: 1fr; }
+  .reel-card { min-height: auto; }
+  .reel-actions { flex-wrap: wrap; gap: 8px; }
+  .creator-badge { font-size: 10px; padding: 4px 8px; }
+  .reel-copy h3 { font-size: 18px; }
+}
+
+@media (max-width: 390px) {
+  .reel-actions { justify-content: center; }
+  .like-count, .comment-count, .share-count { display: none; }
+}
 
 .play-badge { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #fff8; background: #0005; color: #fff; display: grid; place-items: center; font-size: 11px; letter-spacing: .05em; transform: translate(-50%, -50%) scale(.95); opacity: 0; transition: opacity .25s ease, transform .25s ease; pointer-events: none; z-index: 4; }
 .story-art:hover .play-badge, .reel-art:hover .play-badge { opacity: 1; transform: translate(-50%, -50%) scale(1); }
