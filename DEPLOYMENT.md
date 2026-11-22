@@ -58,14 +58,63 @@ All new components are fully responsive:
 - Stories stack vertically on mobile
 - Video preview adapts to any screen size
 
-## 🔧 Technical Details
+---
 
-Files modified:
-- `src/app/page.tsx` - Complete rewrite with real content
-- `src/app/globals.css` - Added reel styles, streak badge, play badge
-- `src/app/api/news/route.ts` - New Live News API
+## ✨ NEW FEATURES - SOCIAL CREATOR REELS
 
-Next commit message format:
+### Instagram/TikTok Style Engagement
+- **Like button** (❤) with count - click to like/unlike
+- **Comment counts** - see how many discuss each reel
+- **Share button** (↗) - share to other platforms
+- All engagement tracked locally (can be persisted later)
+
+### Content Creators Integrated
+Reels feature creators from:
+- **DeepMind** (YouTube) - "The New Reasoning Era"
+- **OpenAI** (TikTok) - "Multi-Modal AI Magic"
+- **Anthropic** (Instagram) - "AI Agents That Browse Your Web"
+- **Google Gemini** (YouTube) - "Gemini 2.0 Speed Test"
+
+Each creator has:
+- Verified badge (✓)
+- Platform indicator (YouTube/TikTok/Instagram)
+- Avatar from their official GitHub avatar
+- Video content with duration overlay
+
+### Social Comments
+Each reel shows comment previews:
+- Example: "This is exactly what I've been waiting for! 🔥"
+- Comment counts per reel
+- Comment likes and timestamps
+
+### API Response Shape
+```json
+{
+  "stories": [
+    {
+      "id": 101,
+      "category": "CREATOR REEL",
+      "title": "The New Reasoning Era...",
+      "creator": { "name": "DeepMind", "handle": "@deepmind", "platform": "youtube" },
+      "likes": 1247,
+      "shares": 342,
+      "comments": [...],
+      "engagement": { "likes": 1247, "shares": 342, "comments": 89 }
+    }
+  ],
+  "socialMetrics": { "totalLikes": 10022, "totalShares": 2709, "totalComments": 569 }
+}
+```
+
+## 🛠️ Technical Details
+
+### Files Modified/Created
+- `src/app/page.tsx` - Complete rewrite with social reels
+- `src/app/globals.css` - Added reel styles, streak badge, play badge, social buttons
+- `src/app/api/news/route.ts` - Enhanced API with creator data and engagement
+- `DEPLOYMENT.md` - Updated documentation
+
+### Next commit message format
 ```
 Co-Authored-By: Claude Code <noreply@anthropic.com>
 ```
@@ -79,7 +128,10 @@ To make this a true daily news habit platform:
 3. **LLM Curation** - Use Claude to summarize and rate AI articles
 4. **Push Notifications** - Notify users of breaking AI news
 5. **Bookmark Sync** - Sync saved stories across devices
+6. **Comment System** - Full comment threads with replies
+7. **User Accounts** - Save reels, follow creators, track engagement
 
 ---
 
 *"Good information should feel human." - Nexora*
+*"AI news should feel like social media." - Nexora*
